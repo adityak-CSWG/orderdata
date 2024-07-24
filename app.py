@@ -3,7 +3,7 @@ import pandas as pd
 import altair as alt
 
 # Load the cleaned CSV file
-df = pd.read_csv('C:\Users\akarupak\Downloads\cleaned_warehouse_orders_data.csv')
+df = pd.read_csv('cleaned_warehouse_orders_data.csv')
 
 # Create a time series chart
 chart = alt.Chart(df).mark_line(point=True).encode(
