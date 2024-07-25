@@ -3,7 +3,7 @@ import pandas as pd
 import altair as alt
 
 # Load the cleaned CSV file
-df = pd.read_csv('Cleaned_Warehouse_Orders_Data__New_.csv')
+df = pd.read_csv('Cleaned_Warehouse_Orders_Data_New_.csv')
 
 # Convert 'date' column to datetime
 df['date'] = pd.to_datetime(df['date'])
@@ -12,8 +12,13 @@ df['date'] = pd.to_datetime(df['date'])
 st.sidebar.header('Filters')
 
 # Date range picker
-start_date = st.sidebar.date_input('Start date', df['date'].min())
-end_date = st.sidebar.date_input('End date', df['date'].max())
+start_date = st.sidebar.date_input('Start date', df['date'].min().date())
+end_date = st.sidebar.date_input('End date', df['date'].max().date())
+
+# Convert the date inputs to datetime format for comparison
+start_date = pd.to_datetime(start_date)
+end_date = pd.to_datetime(end_date)
+
 filtered_df = df[(df['date'] >= start_date) & (df['date'] <= end_date)]
 
 # Warehouse selector
