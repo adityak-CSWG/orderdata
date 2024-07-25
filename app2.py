@@ -3,7 +3,7 @@ import pandas as pd
 import altair as alt
 
 # Load the cleaned CSV file
-df = pd.read_csv('cleaned_warehouse_orders.csv')
+df = pd.read_csv('Cleaned_Warehouse_Orders_Data__New_.csv')
 
 # Convert 'date' column to datetime
 df['date'] = pd.to_datetime(df['date'])
