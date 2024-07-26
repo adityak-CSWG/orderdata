@@ -38,6 +38,8 @@ def run_query():
     return data
 
 df = run_query()
+df['ORDER_DATE'] = pd.to_datetime(df['ORDER_DATE'])
+df['num_orders'] = pd.to_numeric(df['num_orders'])
 
 # Sidebar for filters
 st.sidebar.header('Filters')
@@ -67,7 +69,7 @@ st.write(f"Average Orders per Day: {filtered_df.groupby('ORDER_DATE')['num_order
 
 # Time series chart
 st.header('Time Series of Orders')
-time_series_chart = alt.Chart(filtered_df).mark_line(point=True).encode(
+time_series_chart = alt.Chart(filtered_df).mark_line().encode(
     x='ORDER_DATE:T',
     y='num_orders:Q',
     color='warehouse_address:N',
