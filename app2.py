@@ -41,6 +41,31 @@ df = run_query()
 df['ORDER_DATE'] = pd.to_datetime(df['ORDER_DATE'])
 df['num_orders'] = pd.to_numeric(df['num_orders'])
 
+#make list of all the unique order dates and warehouse addresses
+order_dates = df['ORDER_DATE'].unique()
+warehouse_addresses = df['warehouse_address'].unique()
+
+missing_rows = []
+
+# Check for each combination of order_date and warehouse_address
+for order_date in order_dates:
+    for warehouse_address in warehouse_addresses:
+        # Filter for the specific combination
+        if not ((df['ORDER_DATE'] == order_date) & (df['warehouse_address'] == warehouse_address)).any():
+            missing_rows.append({
+                'ORDER_DATE': order_date,
+                'trade_name': 'None',
+                'warehouse_address': warehouse_address,
+                'num_orders': 0
+            })
+
+# Append missing rows to the original DataFrame
+missing_df = pd.DataFrame(missing_rows)
+df = pd.concat([df, missing_df], ignore_index=True)
+
+# Sort the DataFrame for better readability
+df = df.sort_values(by=['ORDER_DATE', 'warehouse_address']).reset_index(drop=True)
+
 # Sidebar for filters
 st.sidebar.header('Filters')
 
@@ -71,9 +96,8 @@ st.write(f"Average Orders per Day: {filtered_df.groupby('ORDER_DATE')['num_order
 st.header('Time Series of Orders')
 time_series_chart = alt.Chart(filtered_df).mark_line().encode(
     x='ORDER_DATE:T',
-    y='num_orders:Q',
+    y='sum(num_orders)',
     color='warehouse_address:N',
-    tooltip=['ORDER_DATE:T', 'warehouse_address:N', 'num_orders:Q']
 ).interactive()
 st.altair_chart(time_series_chart, use_container_width=True)
 
