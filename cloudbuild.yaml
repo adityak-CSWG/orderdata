@@ -1,0 +1,10 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '--tag', 'us-east4-docker.pkg.dev/gc-proj-devis-poc-6586/cloud-run-source-deploy/intern-dashboard:latest', '.']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-east4-docker.pkg.dev/gc-proj-devis-poc-6586/cloud-run-source-deploy/intern-dashboard:latest']
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['run', 'deploy', 'intern-dashboard', '--image', 'us-east4-docker.pkg.dev/gc-proj-devis-poc-6586/cloud-run-source-deploy/intern-dashboard:latest', '--region', 'us-east4', '--platform', 'managed', '--allow-unauthenticated', '--set-env-vars', 'GOOGLE_CLOUD_PROJECT=gc-proj-devis-poc-6586', '--set-secrets', '"GOOGLE_APPLICATION_CREDENTIALS"=service-account-key:latest', '--network', 'projects/gc-proj-nw-shnp-8211/global/networks/nonprod-core-sharedvpc', '--subnet', 'projects/gc-proj-nw-shnp-8211/regions/us-east4/subnetworks/nonprod-core-subnet']
+
+images:
+  - 'us-east4-docker.pkg.dev/gc-proj-devis-poc-6586/cloud-run-source-deploy/intern-dashboard:latest'
