@@ -9,7 +9,7 @@ steps:
         mkdir -p /root/.ssh
         echo "$SSH_KEY" > /root/.ssh/id_rsa
         chmod 400 /root/.ssh/id_rsa
-        cp C:/Users/adkumar/AppData/Local/Google/Cloud SDK/workingdir/known_hosts.github /root/.ssh/known_hosts
+        cp known_hosts.github /root/.ssh/known_hosts
     volumes:
       - name: 'ssh'
         path: /root/.ssh
