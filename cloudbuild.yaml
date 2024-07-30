@@ -1,10 +1,59 @@
 steps:
+  # Set up SSH key from Secret Manager
+  - name: 'gcr.io/cloud-builders/git'
+    secretEnv: ['SSH_KEY']
+    entrypoint: 'bash'
+    args:
+      - -c
+      - |
+        mkdir -p /root/.ssh
+        echo "$SSH_KEY" > /root/.ssh/id_rsa
+        chmod 400 /root/.ssh/id_rsa
+        cp C:/Users/adkumar/AppData/Local/Google/Cloud SDK/workingdir /root/.ssh/known_hosts
+    volumes:
+      - name: 'ssh'
+        path: /root/.ssh
+
+  # Clone the private GitHub repository
+  - name: 'gcr.io/cloud-builders/git'
+    args:
+      - clone
+      - --recurse-submodules
+      - git@github.com:adkumar/orderdata.git
+    volumes:
+      - name: 'ssh'
+        path: /root/.ssh
+
+  # Build the Docker image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '--tag', 'us-east4-docker.pkg.dev/gc-proj-devis-poc-6586/cloud-run-source-deploy/intern-dashboard:latest', '.']
+  
+  # Push the Docker image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'us-east4-docker.pkg.dev/gc-proj-devis-poc-6586/cloud-run-source-deploy/intern-dashboard:latest']
+  
+  # Deploy to Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
-    args: ['run', 'deploy', 'intern-dashboard', '--image', 'us-east4-docker.pkg.dev/gc-proj-devis-poc-6586/cloud-run-source-deploy/intern-dashboard:latest', '--region', 'us-east4', '--platform', 'managed', '--allow-unauthenticated', '--set-env-vars', 'GOOGLE_CLOUD_PROJECT=gc-proj-devis-poc-6586', '--set-secrets', '"GOOGLE_APPLICATION_CREDENTIALS"=service-account-key:latest', '--network', 'projects/gc-proj-nw-shnp-8211/global/networks/nonprod-core-sharedvpc', '--subnet', 'projects/gc-proj-nw-shnp-8211/regions/us-east4/subnetworks/nonprod-core-subnet']
+    args: [
+      'run', 'deploy', 'intern-dashboard',
+      '--image', 'us-east4-docker.pkg.dev/gc-proj-devis-poc-6586/cloud-run-source-deploy/intern-dashboard:latest',
+      '--region', 'us-east4',
+      '--platform', 'managed',
+      '--allow-unauthenticated',
+      '--set-env-vars', 'GOOGLE_CLOUD_PROJECT=gc-proj-devis-poc-6586',
+      '--set-secrets', '"GOOGLE_APPLICATION_CREDENTIALS"=service-account-key:latest',
+      '--network', 'projects/gc-proj-nw-shnp-8211/global/networks/nonprod-core-sharedvpc',
+      '--subnet', 'projects/gc-proj-nw-shnp-8211/regions/us-east4/subnetworks/nonprod-core-subnet'
+    ]
 
 images:
   - 'us-east4-docker.pkg.dev/gc-proj-devis-poc-6586/cloud-run-source-deploy/intern-dashboard:latest'
+
+availableSecrets:
+  secretManager:
+  - versionName: projects/998524737689/secrets/private-github-key-intern/versions/latest
+    env: 'SSH_KEY'
+
+volumes:
+  - name: 'ssh'
+    path: /root/.ssh
