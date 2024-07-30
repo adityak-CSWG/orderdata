@@ -55,5 +55,4 @@ availableSecrets:
     env: 'SSH_KEY'
 
 options:
-  logging: CLOUD_LOGGING_ONLY
-  logsBucket: gs://gc-oms-devis-poc-bucket/input
+  logging: NONE
