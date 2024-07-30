@@ -53,7 +53,3 @@ availableSecrets:
   secretManager:
   - versionName: projects/998524737689/secrets/private-github-key-intern/versions/latest
     env: 'SSH_KEY'
-
-volumes:
-  - name: 'ssh'
-    path: /root/.ssh
