@@ -53,3 +53,7 @@ availableSecrets:
   secretManager:
   - versionName: projects/998524737689/secrets/private-github-key-intern/versions/latest
     env: 'SSH_KEY'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  logsBucket: gs://gc-oms-devis-poc-bucket/input
