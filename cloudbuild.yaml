@@ -23,6 +23,31 @@ steps:
   - name: 'ssh'
     path: /root/.ssh
 
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '--no-cache', '--tag', 'us-east4-docker.pkg.dev/gc-proj-devis-poc-6586/cloud-run-source-deploy/intern-dashboard:latest', '.']
+  
+  # Push the Docker image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'us-east4-docker.pkg.dev/gc-proj-devis-poc-6586/cloud-run-source-deploy/intern-dashboard:latest']
+  
+  # Deploy to Cloud Run
+- name: 'gcr.io/cloud-builders/gcloud'
+  secretEnv: ['GOOGLE_APPLICATION_CREDENTIALS']
+  args: [
+      'run', 'deploy', 'intern-dashboard',
+      '--image', 'us-east4-docker.pkg.dev/gc-proj-devis-poc-6586/cloud-run-source-deploy/intern-dashboard:latest',
+      '--region', 'us-east4',
+      '--platform', 'managed',
+      '--allow-unauthenticated',
+      '--set-env-vars', 'GOOGLE_CLOUD_PROJECT=gc-proj-devis-poc-6586',
+      '--set-secrets', 'GOOGLE_APPLICATION_CREDENTIALS=application_default_credentials.json',
+      '--network', 'projects/gc-proj-nw-shnp-8211/global/networks/nonprod-core-sharedvpc',
+      '--subnet', 'projects/gc-proj-nw-shnp-8211/regions/us-east4/subnetworks/nonprod-core-subnet'
+    ]
+
+images:
+  - 'us-east4-docker.pkg.dev/gc-proj-devis-poc-6586/cloud-run-source-deploy/intern-dashboard:latest'
+
 availableSecrets:
   secretManager:
   - versionName: projects/998524737689/secrets/private-github-key-intern/versions/latest
