@@ -16,7 +16,7 @@ WORKDIR /app
 
 COPY application_default_credentials.json .
 
-ENV GOOGLE_APPLICATION_CREDENTIALS = "/app/application_default_credentials.json"
+ENV GOOGLE_APPLICATION_CREDENTIALS = "application_default_credentials.json"
 
 COPY . .
 

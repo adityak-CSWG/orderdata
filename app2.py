@@ -7,6 +7,9 @@ from google.cloud import bigquery
 import math
 import json
 import google_crc32c
+import os
+
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'application_default_credentials.json'
 
 def access_secret_version() -> secretmanager.AccessSecretVersionResponse:
 
