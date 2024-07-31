@@ -7,7 +7,7 @@ steps:
       - -c
       - |
         mkdir -p /root/.ssh
-        echo "$SSH_KEY" > /root/.ssh/id_rsa
+        echo "$service-account-key" > /root/.ssh/id_rsa
         chmod 400 /root/.ssh/id_rsa
         cp known_hosts.github /root/.ssh/known_hosts
     volumes:
@@ -19,7 +19,7 @@ steps:
     args:
       - clone
       - --recurse-submodules
-      - git@github.com:adkumar/orderdata.git
+      - git@github.com:adityak-CSWG/orderdata.git
     volumes:
       - name: 'ssh'
         path: /root/.ssh
