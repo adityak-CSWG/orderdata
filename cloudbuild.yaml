@@ -25,5 +25,5 @@ steps:
 
 availableSecrets:
   secretManager:
-  - versionName: projects/998524737689/secrets/service-account-key/latest
+  - versionName: projects/998524737689/secrets/private-github-key-intern/latest
     env: 'SSH_KEY'
