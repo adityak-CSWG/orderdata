@@ -38,7 +38,7 @@ steps:
       '--region', 'us-east4',
       '--platform', 'managed',
       '--allow-unauthenticated',
-      '--set-env-vars', 'GOOGLE_CLOUD_PROJECT=gc-proj-devis-poc-6586, GOOGLE_APPLICATION_CREDENTIALS=application_default_credentials.json',
+      '--set-env-vars', 'GOOGLE_CLOUD_PROJECT=gc-proj-devis-poc-6586, GOOGLE_APPLICATION_CREDENTIALS="application_default_credentials.json"',
       '--network', 'projects/gc-proj-nw-shnp-8211/global/networks/nonprod-core-sharedvpc',
       '--subnet', 'projects/gc-proj-nw-shnp-8211/regions/us-east4/subnetworks/nonprod-core-subnet'
     ]
