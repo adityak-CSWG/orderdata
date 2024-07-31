@@ -112,7 +112,7 @@ def main():
   st.altair_chart(time_series_chart, use_container_width=True)
 
   # Bar chart of total orders per warehouse
-  st.header('Total Orders per Warehouse')
+  st.header('Total rders per Warehouse')
   total_orders_chart = alt.Chart(filtered_df).mark_bar().encode(
       x='warehouse_address:N',
       y='sum(num_orders):Q',
