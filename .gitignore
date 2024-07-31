@@ -1,3 +1,2 @@
 .venv/
 .streamlit/secrets.toml
-application_default_credentials.json
