@@ -8,6 +8,8 @@ import math
 import json
 import google_crc32c
 import os
+from datetime import datetime, timedelta
+import pytz
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = './application_default_credentials.json'
 
@@ -61,7 +63,12 @@ SELECT
 FROM
   FlattenedOrders"""
 
-@st.cache_data(ttl=600)
+#get number of seconds until 8:10am tomorrow
+timeZ_Ny = pytz.timezone('America/New_York') 
+now = datetime.now(timeZ_Ny)
+secs = int((timedelta(hours=24) - (now - now.replace(hour=8, minute=10, second=0))).total_seconds() % (24 * 3600))
+
+@st.cache_data(ttl=secs)
 def run_query():
     query_job = client.query(query)
     results = query_job.result()
@@ -134,7 +141,7 @@ def main():
   st.altair_chart(time_series_chart, use_container_width=True)
 
   # Bar chart of total orders per warehouse
-  st.header('Total rders per Warehouse')
+  st.header('Total Orders per Warehouse')
   total_orders_chart = alt.Chart(filtered_df).mark_bar().encode(
       x='warehouse_address:N',
       y='sum(num_orders):Q',
