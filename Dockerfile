@@ -16,4 +16,6 @@ WORKDIR /app
 
 COPY . .
 
+ENV GOOGLE_APPLICATION_CREDENTIALS="application_default_credentials.json"
+
 ENTRYPOINT ["streamlit", "run", "app2.py", "--server.port=8080", "--server.address=0.0.0.0"]
