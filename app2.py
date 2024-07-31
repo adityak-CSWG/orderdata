@@ -8,7 +8,6 @@ import math
 import json
 import os
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "application_default_credentials.json"
 client = secretmanager.SecretManagerServiceClient()
 response = client.access_secret_version(name='projects/998524737689/secrets/service-account-key')
 service_account_secret = response.payload.data.decode("UTF-8")
