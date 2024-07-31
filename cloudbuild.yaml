@@ -27,3 +27,8 @@ availableSecrets:
   secretManager:
   - versionName: projects/998524737689/secrets/private-github-key-intern/versions/latest
     env: 'SSH_KEY'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+serviceAccount: projects/gc-proj-devis-poc-6586/serviceAccounts/poc-test-git@gc-proj-devis-poc-6586.iam.gserviceaccount.com
