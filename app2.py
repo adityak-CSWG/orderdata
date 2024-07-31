@@ -14,23 +14,16 @@ import pytz
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = './application_default_credentials.json'
 
 def access_secret() -> secretmanager.AccessSecretVersionResponse:
-
-    # Create the Secret Manager client.
     client = secretmanager.SecretManagerServiceClient()
-
-    # Build the resource name of the secret version.
     name = "projects/998524737689/secrets/service-account-key/versions/latest"
-
-    # Access the secret version.
     response = client.access_secret_version(request={"name": name})
 
-    # Verify payload checksum.
     crc32c = google_crc32c.Checksum()
     crc32c.update(response.payload.data)
     if response.payload.data_crc32c != int(crc32c.hexdigest(), 16):
         print("Data corruption detected.")
         return response
-    
+
     payload = response.payload.data.decode("UTF-8")
     return payload
 
@@ -63,7 +56,6 @@ SELECT
 FROM
   FlattenedOrders"""
 
-#get number of seconds until 8:10am tomorrow
 timeZ_Ny = pytz.timezone('America/New_York') 
 now = datetime.now(timeZ_Ny)
 secs = int((timedelta(hours=24) - (now - now.replace(hour=8, minute=10, second=0))).total_seconds() % (24 * 3600))
@@ -75,112 +67,117 @@ def run_query():
     data = results.to_dataframe()
     return data
 
+def load_data():
+    df = run_query()
+    df['ORDER_DATE'] = pd.to_datetime(df['ORDER_DATE'])
+    df['num_orders'] = pd.to_numeric(df['num_orders'])
+    df = df[(df['warehouse_address'] != '')]
+    return df
+
+def filter_data(df, start_date, end_date, selected_warehouses):
+    filtered_df = df[(df['ORDER_DATE'] >= start_date) & 
+                     (df['ORDER_DATE'] <= end_date) & 
+                     (df['warehouse_address'].isin(selected_warehouses))]
+    return filtered_df
+
+def update_filter_state():
+    st.session_state.filters_changed = True
+
 def main():
-  df = run_query()
-  df['ORDER_DATE'] = pd.to_datetime(df['ORDER_DATE'])
-  df['num_orders'] = pd.to_numeric(df['num_orders'])
+    if 'data' not in st.session_state or st.session_state.get('reset', False):
+        st.session_state.data = load_data()
+        st.session_state.start_date = st.session_state.data['ORDER_DATE'].min().date()
+        st.session_state.end_date = st.session_state.data['ORDER_DATE'].max().date()
+        st.session_state.selected_warehouses = st.session_state.data['warehouse_address'].unique().tolist()
+        st.session_state.filters_changed = False
+        st.session_state.reset = False
 
-  #make list of all the unique order dates and warehouse addresses
-  order_dates = df['ORDER_DATE'].unique()
-  warehouse_addresses = df['warehouse_address'].unique()
+    df = st.session_state.data
 
-  missing_rows = []
+    # Sidebar for filters
+    st.sidebar.header('Filters')
 
-  # Check for each combination of order_date and warehouse_address
-  for order_date in order_dates:
-      for warehouse_address in warehouse_addresses:
-          # Filter for the specific combination
-          if not ((df['ORDER_DATE'] == order_date) & (df['warehouse_address'] == warehouse_address)).any():
-              missing_rows.append({
-                  'ORDER_DATE': order_date,
-                  'trade_name': 'None',
-                  'warehouse_address': warehouse_address,
-                  'num_orders': 0
-              })
+    start_date = st.sidebar.date_input('Start date', st.session_state.start_date, key='start_date', on_change=update_filter_state)
+    end_date = st.sidebar.date_input('End date', st.session_state.end_date, key='end_date', on_change=update_filter_state)
 
-  # Append missing rows to the original DataFrame
-  missing_df = pd.DataFrame(missing_rows)
-  df = pd.concat([df, missing_df], ignore_index=True)
+    warehouses = df['warehouse_address'].unique().tolist()
+    selected_warehouses = st.sidebar.multiselect('Select Warehouses', warehouses, default=st.session_state.selected_warehouses, key='selected_warehouses', on_change=update_filter_state)
 
-  # Sort the DataFrame for better readability
-  df = df.sort_values(by=['ORDER_DATE', 'warehouse_address']).reset_index(drop=True)
+    col1, col2 = st.sidebar.columns(2)
+    with col1:
+        filter_button = st.button("Apply Filters", disabled=not st.session_state.filters_changed)
+    with col2:
+        reset_button = st.button("Reset Filters")
 
-  # Sidebar for filters
-  st.sidebar.header('Filters')
+    if reset_button:
+        st.session_state.reset = True
+        st.rerun()
 
-  # Date range picker
-  start_date = st.sidebar.date_input('Start date', df['ORDER_DATE'].min().date())
-  end_date = st.sidebar.date_input('End date', df['ORDER_DATE'].max().date())
+    if filter_button:
+        st.session_state.filters_changed = False
+        st.session_state.filtered_df = filter_data(df, pd.to_datetime(start_date), pd.to_datetime(end_date), selected_warehouses)
 
-  # Convert the date inputs to datetime format for comparison
-  start_date = pd.to_datetime(start_date)
-  end_date = pd.to_datetime(end_date)
+    st.title('Warehouse Orders Dashboard')
 
-  filtered_df = df[(df['ORDER_DATE'] >= start_date) & (df['ORDER_DATE'] <= end_date) & (df['trade_name'] != None)]
+    if 'filtered_df' not in st.session_state:
+        st.session_state.filtered_df = filter_data(df, pd.to_datetime(st.session_state.start_date), pd.to_datetime(st.session_state.end_date), st.session_state.selected_warehouses)
 
-  # Warehouse selector
-  warehouses = df['warehouse_address'].unique().tolist()
-  selected_warehouses = st.sidebar.multiselect('Select Warehouses', warehouses, default=warehouses)
-  filtered_df = filtered_df[filtered_df['warehouse_address'].isin(selected_warehouses)]
+    display_summary_statistics(st.session_state.filtered_df)
+    display_charts(st.session_state.filtered_df)
+    display_data_table(st.session_state.filtered_df)
 
-  # Main title
-  st.title('Warehouse Orders Dashboard')
+def display_summary_statistics(filtered_df):
+    st.header('Summary Statistics')
+    st.write(f"Total Orders: {filtered_df['num_orders'].sum()}")
+    st.write(f"Average Orders per Day: {math.ceil(filtered_df.groupby('ORDER_DATE')['num_orders'].sum().mean())}")
 
-  # Summary statistics
-  st.header('Summary Statistics')
-  st.write(f"Total Orders: {filtered_df['num_orders'].sum()}")
-  st.write(f"Average Orders per Day: {math.ceil(filtered_df.groupby('ORDER_DATE')['num_orders'].sum().mean())}")
+def display_charts(filtered_df):
+    st.header('Time Series of Orders')
+    time_series_chart = alt.Chart(filtered_df).mark_line().encode(
+        x='ORDER_DATE:T',
+        y='sum(num_orders)',
+        color='warehouse_address:N',
+    ).interactive()
+    st.altair_chart(time_series_chart, use_container_width=True)
 
-  # Time series chart
-  st.header('Time Series of Orders')
-  time_series_chart = alt.Chart(filtered_df).mark_line().encode(
-      x='ORDER_DATE:T',
-      y='sum(num_orders)',
-      color='warehouse_address:N',
-  ).interactive()
-  st.altair_chart(time_series_chart, use_container_width=True)
+    st.header('Total Orders per Warehouse')
+    total_orders_chart = alt.Chart(filtered_df).mark_bar().encode(
+        x='warehouse_address:N',
+        y='sum(num_orders):Q',
+        color='warehouse_address:N',
+        tooltip=['warehouse_address:N', 'sum(num_orders):Q']
+    ).interactive()
+    st.altair_chart(total_orders_chart, use_container_width=True)
 
-  # Bar chart of total orders per warehouse
-  st.header('Total Orders per Warehouse')
-  total_orders_chart = alt.Chart(filtered_df).mark_bar().encode(
-      x='warehouse_address:N',
-      y='sum(num_orders):Q',
-      color='warehouse_address:N',
-      tooltip=['warehouse_address:N', 'sum(num_orders):Q']
-  ).interactive()
-  st.altair_chart(total_orders_chart, use_container_width=True)
+    st.header('Daily Order Density')
+    heatmap_chart = alt.Chart(filtered_df).mark_rect().encode(
+        x='ORDER_DATE:T',
+        y='warehouse_address:N',
+        color='sum(num_orders):Q',
+        tooltip=['ORDER_DATE:T', 'warehouse_address:N', 'sum(num_orders):Q']
+    ).interactive()
+    st.altair_chart(heatmap_chart, use_container_width=True)
 
-  # Heatmap of daily order density
-  st.header('Daily Order Density')
-  heatmap_chart = alt.Chart(filtered_df).mark_rect().encode(
-      x='ORDER_DATE:T',
-      y='warehouse_address:N',
-      color='sum(num_orders):Q',
-      tooltip=['ORDER_DATE:T', 'warehouse_address:N', 'sum(num_orders):Q']
-  ).interactive()
-  st.altair_chart(heatmap_chart, use_container_width=True)
+    st.header('Order Proportions per Warehouse')
+    order_proportions = filtered_df.groupby('warehouse_address')['num_orders'].sum().reset_index()
+    pie_chart = alt.Chart(order_proportions).mark_arc().encode(
+        theta='num_orders:Q',
+        color='warehouse_address:N',
+        tooltip=['warehouse_address:N', 'num_orders:Q']
+    ).interactive()
+    st.altair_chart(pie_chart, use_container_width=True)
 
-  # Pie chart of order proportions per warehouse
-  st.header('Order Proportions per Warehouse')
-  order_proportions = filtered_df.groupby('warehouse_address')['num_orders'].sum().reset_index()
-  pie_chart = alt.Chart(order_proportions).mark_arc().encode(
-      theta='num_orders:Q',
-      color='warehouse_address:N',
-      tooltip=['warehouse_address:N', 'num_orders:Q']
-  ).interactive()
-  st.altair_chart(pie_chart, use_container_width=True)
+def display_data_table(filtered_df):
+    st.header('Data Table')
+    st.dataframe(filtered_df)
 
-  # Data table
-  st.header('Data Table')
-  st.dataframe(filtered_df)
+    st.header('Download Filtered Data')
+    st.download_button(
+        label="Download CSV",
+        data=filtered_df.to_csv(index=False).encode('utf-8'),
+        file_name='filtered_warehouse_orders.csv',
+        mime='text/csv'
+    )
 
-  # Download button
-  st.header('Download Filtered Data')
-  st.download_button(
-      label="Download CSV",
-      data=filtered_df.to_csv(index=False).encode('utf-8'),
-      file_name='filtered_warehouse_orders.csv',
-      mime='text/csv'
-  )
-
-main()
+if __name__ == "__main__":
+    main()
