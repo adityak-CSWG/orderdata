@@ -1,14 +1,4 @@
 steps:
-  # Generate known_hosts file dynamically
-  - name: 'gcr.io/cloud-builders/git'
-    entrypoint: 'bash'
-    args:
-      - -c
-      - |
-        mkdir -p /root/.ssh
-        ssh-keyscan github.com > /root/.ssh/known_hosts
-        cat /root/.ssh/known_hosts
-
   # Set up SSH key from Secret Manager
   - name: 'gcr.io/cloud-builders/git'
     secretEnv: ['SSH_KEY']
@@ -19,13 +9,20 @@ steps:
         mkdir -p /root/.ssh
         echo "$SSH_KEY" > /root/.ssh/id_rsa
         chmod 400 /root/.ssh/id_rsa
+        cp known_hosts.github /root/.ssh/known_hosts
+    volumes:
+      - name: 'ssh'
+        path: /root/.ssh
 
   # Clone the private GitHub repository
   - name: 'gcr.io/cloud-builders/git'
     args:
       - clone
       - --recurse-submodules
-      - git@github.com:GIT_USERNAME/GIT_REPOSITORY.git
+      - git@github.com:adkumar/orderdata.git
+    volumes:
+      - name: 'ssh'
+        path: /root/.ssh
 
   # Build the Docker image
   - name: 'gcr.io/cloud-builders/docker'
