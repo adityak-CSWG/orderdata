@@ -12,7 +12,7 @@ steps:
   volumes:
   - name: 'ssh'
     path: /root/.ssh
-
+ 
 # Clone the repository
 - name: 'gcr.io/cloud-builders/git'
   args:
