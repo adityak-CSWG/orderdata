@@ -8,19 +8,7 @@ import math
 import json
 import os
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = {
-  "delegates": [],
-  "service_account_impersonation_url": "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/poc-test-git@gc-proj-devis-poc-6586.iam.gserviceaccount.com:generateAccessToken",
-  "source_credentials": {
-    "account": "",
-    "client_id": "764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.apps.googleusercontent.com",
-    "client_secret": "d-FL95Q19q7MQmFpd7hHD0Ty",
-    "refresh_token": "1//05sR2QjKDfBP-CgYIARAAGAUSNwF-L9Ir3c7RxCsY-d0LlFJWt0rbalbMIOGEF2g3rkq5qXXzRY23uzhXCARBzSPumujIhXQZWwA",
-    "type": "authorized_user",
-    "universe_domain": "googleapis.com"
-  },
-  "type": "impersonated_service_account"
-}
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "application_default_credentials.json"
 
 client = secretmanager.SecretManagerServiceClient()
 response = client.access_secret_version(name='projects/998524737689/secrets/service-account-key')
