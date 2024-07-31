@@ -7,17 +7,14 @@ from google.cloud import bigquery
 import math
 import json
 import google_crc32c
-import os
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'application_default_credentials.json'
-
-def access_secret_version() -> secretmanager.AccessSecretVersionResponse:
+def access_secret() -> secretmanager.AccessSecretVersionResponse:
 
     # Create the Secret Manager client.
     client = secretmanager.SecretManagerServiceClient()
 
     # Build the resource name of the secret version.
-    name = "projects/998524737689/secrets/service-account-key"
+    name = "projects/998524737689/secrets/service-account-key/versions/latest"
 
     # Access the secret version.
     response = client.access_secret_version(request={"name": name})
@@ -32,7 +29,7 @@ def access_secret_version() -> secretmanager.AccessSecretVersionResponse:
     payload = response.payload.data.decode("UTF-8")
     return payload
 
-response = access_secret_version()
+response = access_secret()
 service_account_key = json.loads(response)
 
 credentials = service_account.Credentials.from_service_account_info(

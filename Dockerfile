@@ -20,4 +20,4 @@ ENV GOOGLE_APPLICATION_CREDENTIALS = "application_default_credentials.json"
 
 COPY . .
 
-ENTRYPOINT ["streamlit", "run", "app2.py", "--server.port=8080", "--server.address=0.0.0.0"]
+ENTRYPOINT ["streamlit", "run", "app2.py", "--server.port=8080"]
