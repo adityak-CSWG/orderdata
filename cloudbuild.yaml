@@ -32,7 +32,6 @@ steps:
   
   # Deploy to Cloud Run
 - name: 'gcr.io/cloud-builders/gcloud'
-  secretEnv: ['GOOGLE_APPLICATION_CREDENTIALS']
   args: [
       'run', 'deploy', 'intern-dashboard',
       '--image', 'us-east4-docker.pkg.dev/gc-proj-devis-poc-6586/cloud-run-source-deploy/intern-dashboard:latest',
