@@ -2,13 +2,15 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 from google.oauth2 import service_account
+from google.cloud import secretmanager
 from google.cloud import bigquery
 import math
 import json
-import os
 
-service_account_secret = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
+client = secretmanager.SecretManagerServiceClient()
+response = client.access_secret_version(name='projects/998524737689/secrets/service-account-key')
+service_account_secret = response.payload.data.decode("UTF-8")
 service_account_key = json.loads(service_account_secret)
 
 credentials = service_account.Credentials.from_service_account_info(
