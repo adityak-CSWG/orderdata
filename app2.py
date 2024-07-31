@@ -6,14 +6,31 @@ from google.cloud import secretmanager
 from google.cloud import bigquery
 import math
 import json
-import os
+import google_crc32c
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "application_default_credentials.json"
+def access_secret_version() -> secretmanager.AccessSecretVersionResponse:
 
-client = secretmanager.SecretManagerServiceClient()
-response = client.access_secret_version(name='projects/998524737689/secrets/service-account-key')
-service_account_secret = response.payload.data.decode("UTF-8")
-service_account_key = json.loads(service_account_secret)
+    # Create the Secret Manager client.
+    client = secretmanager.SecretManagerServiceClient()
+
+    # Build the resource name of the secret version.
+    name = "projects/998524737689/secrets/service-account-key"
+
+    # Access the secret version.
+    response = client.access_secret_version(request={"name": name})
+
+    # Verify payload checksum.
+    crc32c = google_crc32c.Checksum()
+    crc32c.update(response.payload.data)
+    if response.payload.data_crc32c != int(crc32c.hexdigest(), 16):
+        print("Data corruption detected.")
+        return response
+    
+    payload = response.payload.data.decode("UTF-8")
+    return payload
+
+response = access_secret_version()
+service_account_key = json.load(response)
 
 credentials = service_account.Credentials.from_service_account_info(
     service_account_key,
