@@ -30,7 +30,7 @@ def access_secret_version() -> secretmanager.AccessSecretVersionResponse:
     return payload
 
 response = access_secret_version()
-service_account_key = json.load(response)
+service_account_key = json.loads(response)
 
 credentials = service_account.Credentials.from_service_account_info(
     service_account_key,
