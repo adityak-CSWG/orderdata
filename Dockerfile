@@ -14,6 +14,8 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
+COPY application_default_credentials.json .
+
 ENV GOOGLE_APPLICATION_CREDENTIALS="application_default_credentials.json"
 
 COPY . .
