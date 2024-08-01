@@ -71,13 +71,33 @@ def load_data():
     df = run_query()
     df['ORDER_DATE'] = pd.to_datetime(df['ORDER_DATE'])
     df['num_orders'] = pd.to_numeric(df['num_orders'])
-    df = df[(df['warehouse_address'] != '')]
+
+    order_dates = df['ORDER_DATE'].unique()
+    warehouse_addresses = df['warehouse_address'].unique()
+
+    missing_rows = []
+
+  # Check for each combination of order_date and warehouse_address
+    for order_date in order_dates:
+      for warehouse_address in warehouse_addresses:
+          # Filter for the specific combination
+          if not ((df['ORDER_DATE'] == order_date) & (df['warehouse_address'] == warehouse_address)).any():
+              missing_rows.append({
+                  'ORDER_DATE': order_date,
+                  'trade_name': 'None',
+                  'warehouse_address': warehouse_address,
+                  'num_orders': 0
+              })
+
+  # Append missing rows to the original DataFrame
+    missing_df = pd.DataFrame(missing_rows)
+    df = pd.concat([df, missing_df], ignore_index=True)
     return df
 
 def filter_data(df, start_date, end_date, selected_warehouses):
     filtered_df = df[(df['ORDER_DATE'] >= start_date) & 
                      (df['ORDER_DATE'] <= end_date) & 
-                     (df['warehouse_address'].isin(selected_warehouses))]
+                     (df['warehouse_address'].isin(selected_warehouses)) & ((df['warehouse_address'] != '') & (df['trade_name'] != None) & (df['trade_name'] != 0))]
     return filtered_df
 
 def update_filter_state():
@@ -88,7 +108,7 @@ def main():
         st.session_state.data = load_data()
         st.session_state.start_date = st.session_state.data['ORDER_DATE'].min().date()
         st.session_state.end_date = st.session_state.data['ORDER_DATE'].max().date()
-        st.session_state.selected_warehouses = st.session_state.data['warehouse_address'].unique().tolist()
+        st.session_state.selected_warehouses = [w for w in st.session_state.data['warehouse_address'].unique().tolist() if w != '']
         st.session_state.filters_changed = False
         st.session_state.reset = False
 
