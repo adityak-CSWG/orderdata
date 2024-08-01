@@ -92,6 +92,9 @@ def main():
         st.session_state.filters_changed = False
         st.session_state.reset = False
 
+    if 'start_date' not in st.session_state:
+        st.session_state.start_date = df['ORDER_DATE'].min().date()
+
     df = st.session_state.data
 
     # Sidebar for filters
@@ -110,7 +113,8 @@ def main():
         reset_button = st.button("Reset Filters")
 
     if reset_button:
-        st.session_state.reset = True
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
         st.rerun()
 
     if filter_button:
